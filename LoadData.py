@@ -115,21 +115,23 @@ def getApplianceData(data, taggingInfo):
     colSize = len(data.index)
     #we need to interate through all tagged devices
     for URdeviceID, URname, URon, URoff in taggingInfo:
-        # get values out of this mess
-        deviceID = int(URdeviceID[0][0])
-        name = str(URname[0][0])[2:-2]
-        on = URon[0][0]
-        off = URoff[0][0]
+        names = tagTable.columns.values.tolist()
         
-        newCol = np.zeros(colSize, dtype=bool).transpose()
-        uniqueID = ' '.join([str(name), str(deviceID)])
-        newFrame = pd.DataFrame(newCol, columns=[uniqueID], index=data.index)
-        newFrame[on:off] = ~newFrame[on:off]
-        try:
-            tagTable = tagTable.merge([newFrame], how='right')
-            print("Merged")
-        except Exception as e:
+        if name not in names:
+            # get values out of this mess
+            deviceID = int(URdeviceID[0][0])
+            name = str(URname[0][0])[2:-2]
+            on = URon[0][0]
+            off = URoff[0][0]
+            
+            newCol = np.zeros(colSize, dtype=bool).transpose()
+            uniqueID = ' '.join([str(name), str(deviceID)])
+            newFrame = pd.DataFrame(newCol, columns=[uniqueID], index=data.index)
+            newFrame[on:off] = ~newFrame[on:off]
             tagTable = pd.concat([tagTable, newFrame], axis=1)
-            print(e)
+            
+        else:
+            tagTable = tagTable.merge([newFrame], how='right', on=name)
+
 
     return tagTable        
