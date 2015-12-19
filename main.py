@@ -24,7 +24,7 @@ if __name__ == '__main__':
     # Split the data into train and test pieces for both X and Y
     X_train, X_test, Y_train, Y_test = train_test_split(X.head(2000), Y.head(2000), train_size=0.80)
     model = hf.HFModel(X_train, Y_train)
-    print "Accuracy on test = %.3f" % metrics.accuracy_score(model.predict(X_test), Y_test)
+    print("Accuracy on test = %.3f" % metrics.accuracy_score(model.predict(X_test), Y_test))
 
 
     # print(H3.L1.head(5))
