@@ -1,4 +1,4 @@
-#from unittest.mock import inplace
+from unittest.mock import inplace
 from numpy import dtype
 __author__ = 'sudhir'
 
@@ -19,72 +19,63 @@ def loadData(filename):
     
     L1_P = data["Buffer"]["LF1V"][0][0] * np.conjugate(data["Buffer"]["LF1I"][0][0])
     L2_P = data["Buffer"]["LF2V"][0][0] * np.conjugate(data["Buffer"]["LF2I"][0][0])
-
+    
     # Compute net Complex power
     L1_ComplexPower = L1_P.sum(axis=1);
     L2_ComplexPower = L2_P.sum(axis=1);
-
+    
     ProcessedData = {};
-
+    
     # Real, Reactive, Apparent powers
     # Phase-1
     ProcessedData["L1_Real"] = L1_ComplexPower.real;
     ProcessedData["L1_Imag"] = L1_ComplexPower.imag;
     ProcessedData["L1_App"] = abs(L1_ComplexPower);
-
+    
     # Real, Reactive, Apparent powers
     # Phase-II
     ProcessedData["L2_Real"] = L2_ComplexPower.real;
     ProcessedData["L2_Imag"] = L2_ComplexPower.imag;
     ProcessedData["L2_App"] = abs(L2_ComplexPower);
-
+    
     # Compute Power Factor, we only consider the first 60Hz component
     ProcessedData["L1_Pf"] = np.cos(np.angle(L1_P[:,0], deg=False));
     ProcessedData["L2_Pf"] = np.cos(np.angle(L2_P[:,0], deg=False));
-
-
+    
+    
     # Copy Time ticks to our processed structure
     ProcessedData["L1_TimeTicks"] = data["Buffer"]["TimeTicks1"][0][0];
     ProcessedData["L2_TimeTicks"] = data["Buffer"]["TimeTicks2"][0][0];
-
+    
     # Move over HF Noise and Device label (tagging) data to our final structure as well
     ProcessedData["HF"] = data["Buffer"]["HF"][0][0];
     ProcessedData["HF_TimeTicks"] = data["Buffer"]["TimeTicksHF"][0][0];
-
-    if "TaggingInfo" in data["Buffer"].dtype.names:
-        # Copy Labels/TaggingInfo id they exist
-        ProcessedData["TaggingInfo"] = data["Buffer"]["TaggingInfo"][0][0];
-
-    # # multiprocess for epic fun
-    # q1 = mp.Queue()
-    # q2 = mp.Queue()
-    # qf = mp.Queue()
-    # qa = mp.Queue()
-    #
-    # p1 = mp.Process(target=prepLineData, args=(q1, ProcessedData["L1_Real"], ProcessedData["L1_Imag"], ProcessedData["L1_App"], ProcessedData["L1_Pf"], ProcessedData["L1_TimeTicks"]))
-    # print("P1 starting")
-    # p1.start()
-    # print("P1 started")
-    # #p1.terminate()
-    #
-    # p2 = mp.Process(target=prepLineData, args=(q2, ProcessedData["L2_Real"], ProcessedData["L2_Imag"], ProcessedData["L2_App"], ProcessedData["L2_Pf"], ProcessedData["L2_TimeTicks"]))
-    # print("P2 starting")
-    # p2.start()
-    # print("P2 started")
-    # #p2.terminate()
-    #
-    # pf = mp.Process(target=prepHFData, args=(qf, ProcessedData["HF"], ProcessedData["HF_TimeTicks"]))
-    # print("Pf starting")
-    # pf.start()
-    # print("Pf started")
-    # # pf.terminate()
-    #
-    # return houseData(q1.get(), q2.get(), qf.get(), ProcessedData['TaggingInfo'])
-    # print ProcessedData['TaggingInfo']
-    if "TaggingInfo" in data["Buffer"].dtype.names:
-        return houseData(None, None, prepHFData(ProcessedData["HF"], ProcessedData["HF_TimeTicks"]), ProcessedData['TaggingInfo'])
-    else:
-        return houseData(None, None, prepHFData(ProcessedData["HF"], ProcessedData["HF_TimeTicks"]), None)
+    
+    # Copy Labels/TaggingInfo id they exist
+    ProcessedData["TaggingInfo"] = data["Buffer"]["TaggingInfo"][0][0];
+    
+    # multiprocess for epic fun
+    q1 = mp.Queue() 
+    q2 = mp.Queue() 
+    qf = mp.Queue() 
+    qa = mp.Queue()
+    
+    p1 = mp.Process(target=prepLineData, args=(q1, ProcessedData["L1_Real"], ProcessedData["L1_Imag"], ProcessedData["L1_App"], ProcessedData["L1_Pf"], ProcessedData["L1_TimeTicks"]))
+    #print("P1 starting")
+    p1.start()
+    #print("P1 started")
+    
+    p2 = mp.Process(target=prepLineData, args=(q2, ProcessedData["L2_Real"], ProcessedData["L2_Imag"], ProcessedData["L2_App"], ProcessedData["L2_Pf"], ProcessedData["L2_TimeTicks"]))
+    #print("P2 starting")
+    p2.start()
+    #print("P2 started")
+    
+    pf = mp.Process(target=prepHFData, args=(qf, ProcessedData["HF"], ProcessedData["HF_TimeTicks"]))
+    #print("Pf starting")
+    pf.start()
+    #print("Pf started")
+    
+    return houseData(q1.get(), q2.get(), qf.get(), ProcessedData['TaggingInfo'])
 
 # let's turn this info into a pandaframe
 def prepHFData(q, pdhf, pdhft):
@@ -92,7 +83,7 @@ def prepHFData(q, pdhf, pdhft):
     hfTimesteps = pd.DataFrame(pdhf, columns=None)
     hfTimesteps = hfTimesteps.transpose()
     hfTimesteps.set_index(pdhft.astype(int), inplace=True)
-
+    
     # create midpoint list of frequency ranges
     l = list(range(122, 1000000, 244))
     # some trimming due to rounding concerns
@@ -104,26 +95,6 @@ def prepHFData(q, pdhf, pdhft):
     
     q.put(hfTimesteps)
     return
-
-# let's turn this info into a pandaframe
-def prepHFData(pdhf, pdhft):
-    # with all relevant HF info inside ProcessedData, now we need to slice it into timesteps
-    hfTimesteps = pd.DataFrame(pdhf, columns=None)
-    hfTimesteps_new = hfTimesteps.transpose()
-    # hfTimesteps.set_index(pdhft.astype(int), inplace=True)
-    hfTimesteps_new["Timestamp"] = pdhft.astype(int)
-    # print hfTimesteps_new.drop('Timestamp', axis=1)
-    # # create midpoint list of frequency ranges
-    # l = list(range(122, 1000000, 244))
-    # # some trimming due to rounding concerns
-    # l = l[1:-1]
-    # cols = np.asarray(l)
-    # hfTimesteps.columns = cols
-    #
-    # print("HF Data prepped")
-
-    #q.put(hfTimesteps)
-    return hfTimesteps_new
 
 def prepLineData(q, real, imag, app, pf, timeticks):
     ldFrame = pd.DataFrame([real, imag, app, pf], columns=None)
