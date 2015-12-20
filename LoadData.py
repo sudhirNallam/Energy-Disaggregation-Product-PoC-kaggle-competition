@@ -135,8 +135,6 @@ def getApplianceData(data, taggingInfo):
             zeroIndex = tagTable.index[0]
             onIndex = int(on - zeroIndex)
             offIndex = int(off - zeroIndex)
-            #print(lastColIndex, names)
-            print(tagTable.iloc[onIndex:offIndex,[lastColIndex]])
             tagTable.iloc[onIndex:offIndex,[lastColIndex]]= ~tagTable.iloc[onIndex:offIndex,[lastColIndex]]
 
     return tagTable        
