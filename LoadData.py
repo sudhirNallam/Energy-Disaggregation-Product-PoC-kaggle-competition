@@ -116,22 +116,23 @@ def getApplianceData(data, taggingInfo):
     #we need to interate through all tagged devices
     for URdeviceID, URname, URon, URoff in taggingInfo:
         names = tagTable.columns.values.tolist()
+        # get values out of this mess
+        deviceID = int(URdeviceID[0][0])
+        name = str(URname[0][0])[2:-2]
+        on = URon[0][0]
+        off = URoff[0][0]
         
-        if name not in names:
-            # get values out of this mess
-            deviceID = int(URdeviceID[0][0])
-            name = str(URname[0][0])[2:-2]
-            on = URon[0][0]
-            off = URoff[0][0]
-            
-            newCol = np.zeros(colSize, dtype=bool).transpose()
-            uniqueID = ' '.join([str(name), str(deviceID)])
+        newCol = np.zeros(colSize, dtype=bool).transpose()
+        uniqueID = ' '.join([str(name), str(deviceID)])
+        
+        if uniqueID not in names:
             newFrame = pd.DataFrame(newCol, columns=[uniqueID], index=data.index)
             newFrame[on:off] = ~newFrame[on:off]
             tagTable = pd.concat([tagTable, newFrame], axis=1)
             
         else:
-            tagTable = tagTable.merge([newFrame], how='right', on=name)
-
+            #lastColIndex = len(names)-1
+            #print(lastColIndex, names)
+            tagTable.loc[:,:uniqueID][on:off] = ~tagTable.loc[:,:uniqueID][on:off]
 
     return tagTable        
