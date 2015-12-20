@@ -131,8 +131,12 @@ def getApplianceData(data, taggingInfo):
             tagTable = pd.concat([tagTable, newFrame], axis=1)
             
         else:
-            #lastColIndex = len(names)-1
+            lastColIndex = len(names)-1
+            zeroIndex = tagTable.index[0]
+            onIndex = int(on - zeroIndex)
+            offIndex = int(off - zeroIndex)
             #print(lastColIndex, names)
-            tagTable.loc[:,:uniqueID][on:off] = ~tagTable.loc[:,:uniqueID][on:off]
+            print(tagTable.iloc[onIndex:offIndex,[lastColIndex]])
+            tagTable.iloc[onIndex:offIndex,[lastColIndex]]= ~tagTable.iloc[onIndex:offIndex,[lastColIndex]]
 
     return tagTable        

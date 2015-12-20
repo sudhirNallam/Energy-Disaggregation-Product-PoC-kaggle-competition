@@ -10,4 +10,4 @@ if __name__ == '__main__':
     H3 = ld.loadData('data/H3/Tagged_Training_07_30_1343631601.mat')
     print(H3.HF.head(5))
     print(H3.L1.head())
-    print(ld.getApplianceData(H3.HF, H3.tagInfo).head(5))
+    ld.getApplianceData(H3.HF, H3.tagInfo).to_csv('data/H3/appData.csv')
