@@ -14,6 +14,6 @@ if __name__ == '__main__':
     
     X = H3.HF
     Y = ld.getApplianceData(X, H3.tagInfo)
-    Y = Y.drop('Back Porch Lights 1', axis=1)
+    #Y = Y.drop('Back Porch Lights 1', axis=1)
     
     hf.model(X,Y)

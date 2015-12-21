@@ -20,15 +20,21 @@ def model(freqData, target):
     model = KNeighborsClassifier(neighbors)
     
     X_train, X_test, Y_train, Y_test = train_test_split(freqData, target, train_size=.80)
+    split = timeit.default_timer()
+    print("Split in ", split-start)
     
     model.fit(X_train, Y_train) 
+    fit = timeit.default_timer()
+    print("Fit in", fit-split)
     
     prediction = model.predict(X_test)
+    predict = timeit.default_timer()
+    print("Predict in", predict-fit)
     
-    print("Accuracy on test = %.3f" % metrics.accuracy_score(preditcion, Y_test))
-    print("Accuracy on test = %.3f" % metrics.hamming_loss(preditcion, Y_test))
+    print("Accuracy on test = %.5f" % metrics.accuracy_score(prediction, Y_test))
+    print("Hamming loss on test = %.5f" % metrics.hamming_loss(prediction, Y_test))
 
     stop = timeit.default_timer()
-    print("Runtime: ",stop-start," seconds.")
+    print("Total runtime:",stop-start,"seconds.")
     
     #return model, prediction, probabilities
