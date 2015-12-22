@@ -53,32 +53,17 @@ def loadData(filename):
     
     # Copy Labels/TaggingInfo id they exist
     ProcessedData["TaggingInfo"] = data["Buffer"]["TaggingInfo"][0][0];
+        
+    p1 = prepLineData(ProcessedData["L1_Real"], ProcessedData["L1_Imag"], ProcessedData["L1_App"], ProcessedData["L1_Pf"], ProcessedData["L1_TimeTicks"])
+        
+    p2 = prepLineData(ProcessedData["L2_Real"], ProcessedData["L2_Imag"], ProcessedData["L2_App"], ProcessedData["L2_Pf"], ProcessedData["L2_TimeTicks"])
+        
+    pf = target=prepHFData(ProcessedData["HF"], ProcessedData["HF_TimeTicks"])
     
-    # multiprocess for epic fun
-    q1 = mp.Queue() 
-    q2 = mp.Queue() 
-    qf = mp.Queue() 
-    qa = mp.Queue()
-    
-    p1 = mp.Process(target=prepLineData, args=(q1, ProcessedData["L1_Real"], ProcessedData["L1_Imag"], ProcessedData["L1_App"], ProcessedData["L1_Pf"], ProcessedData["L1_TimeTicks"]))
-    #print("P1 starting")
-    p1.start()
-    #print("P1 started")
-    
-    p2 = mp.Process(target=prepLineData, args=(q2, ProcessedData["L2_Real"], ProcessedData["L2_Imag"], ProcessedData["L2_App"], ProcessedData["L2_Pf"], ProcessedData["L2_TimeTicks"]))
-    #print("P2 starting")
-    p2.start()
-    #print("P2 started")
-    
-    pf = mp.Process(target=prepHFData, args=(qf, ProcessedData["HF"], ProcessedData["HF_TimeTicks"]))
-    #print("Pf starting")
-    pf.start()
-    #print("Pf started")
-    
-    return houseData(q1.get(), q2.get(), qf.get(), ProcessedData['TaggingInfo'])
+    return houseData(p1, p2, pf, ProcessedData['TaggingInfo'])
 
 # let's turn this info into a pandaframe
-def prepHFData(q, pdhf, pdhft):
+def prepHFData(pdhf, pdhft):
     # with all relevant HF info inside ProcessedData, now we need to slice it into timesteps
     hfTimesteps = pd.DataFrame(pdhf, columns=None)
     hfTimesteps = hfTimesteps.transpose()
@@ -93,10 +78,9 @@ def prepHFData(q, pdhf, pdhft):
     
     print("HF Data prepped")
     
-    q.put(hfTimesteps)
-    return
+    return hfTimesteps
 
-def prepLineData(q, real, imag, app, pf, timeticks):
+def prepLineData(real, imag, app, pf, timeticks):
     ldFrame = pd.DataFrame([real, imag, app, pf], columns=None)
     ldFrame = ldFrame.transpose()
     ldFrame.set_index(timeticks.astype(int), inplace=True)
@@ -105,8 +89,7 @@ def prepLineData(q, real, imag, app, pf, timeticks):
     
     print("Line Data prepped")
     
-    q.put(ldFrame)
-    return
+    return ldFrame
 
 # return a large, rather disperse dataframe of all appliance on times
 # takes in a pandaframe of line or HF data plus relevant ticks and returns tagged appliance on/off (i.e. target) info for that range for all appliances 
