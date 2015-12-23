@@ -91,6 +91,7 @@ def prepHFData(q, pdhf, pdhft):
     cols = np.asarray(l)
     hfTimesteps.columns = cols
     
+    #hfTimesteps.to_csv('data/H3/Results/FrequencyVals.csv')
     print("HF Data prepped")
     
     q.put(hfTimesteps)
@@ -127,7 +128,7 @@ def getApplianceData(data, taggingInfo):
         
         if uniqueID not in names:
             newFrame = pd.DataFrame(newCol, columns=[uniqueID], index=data.index)
-            newFrame[on:off] = ~newFrame[on:off]
+            #newFrame[on:off] = ~newFrame[on:off]
             tagTable = pd.concat([tagTable, newFrame], axis=1)
             
         else:
@@ -135,6 +136,6 @@ def getApplianceData(data, taggingInfo):
             zeroIndex = tagTable.index[0]
             onIndex = int(on - zeroIndex)
             offIndex = int(off - zeroIndex)
-            tagTable.iloc[onIndex:offIndex,[lastColIndex]]= ~tagTable.iloc[onIndex:offIndex,[lastColIndex]]
+            #tagTable.iloc[onIndex:offIndex,[lastColIndex]]= ~tagTable.iloc[onIndex:offIndex,[lastColIndex]]
 
     return tagTable        
