@@ -1,2 +1,2 @@
 # ds_ga_1001
-Clonining Steps:
+Please check the Report.pdf for details
